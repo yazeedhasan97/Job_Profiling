@@ -1,0 +1,6 @@
+django
+pymongo
+mongoengine
+django-mongoengine
+django-rest-framework-mongoengine
+djangorestframework
