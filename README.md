@@ -13,6 +13,7 @@ Available clusters:
 end points : returns the cluster based on provided info in the [GET] request :
 
 Notes:
+
 	1- None of the attributes is requaired (A placeholder will take a part)
 	
 	
@@ -24,6 +25,7 @@ Notes:
 	
 
 inputs are 
+
 	1- 'experience' --> [any float between 0 and 150]
 	
 	
