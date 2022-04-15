@@ -39,8 +39,10 @@ inputs are
 	
 	
 	5- 'gender' --> ['male', 'female']
+	
+	6- 'disability' --> ['no_disability', 'with_disability']
 
-http://127.0.0.1:8000/cluster/?experience=0&age=57&education=secondary_or_below&governorate=al_kirk&gender=female
+http://127.0.0.1:8000/cluster/?experience=0&age=57&education=secondary_or_below&governorate=al_kirk&gender=female&disability=no_disability # this is how full&right api call should look
 
 
 http://127.0.0.1:8000/cluster/?experience=0&age=28&education=middle_diploma&governorate=ajloun&gender=female

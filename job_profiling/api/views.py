@@ -6,39 +6,38 @@ from rest_framework.response import Response
 from django.http import HttpRequest, JsonResponse
 
 from api import ai_model
-from api.consts import *
+from api import utils
 from api.documents import EvaluationOutput
 from api.serializers import EvaluationOutputSerializer
 import random
 import joblib
 import pandas as pd
+import numpy as np
 from django.conf import settings
 
-if os.path.exists(MODEL):
-    model = joblib.load(MODEL)
-    ENCODERS[GENDER] = joblib.load(ENCODERS[GENDER])
-    ENCODERS[EDUCATION] = joblib.load(ENCODERS[EDUCATION])
-    ENCODERS[GOVERNORATE] = joblib.load(ENCODERS[GOVERNORATE])
+# this reads the files on the first run of the API, and as long as
+# the API is running and the files exists they wil work fine
+# if the API is restarted and the models/encoder were not there it will autogenerate them
+# but note, this will not work if the data file have been removed
+if os.path.exists(utils.MODEL):
+    model = joblib.load(utils.MODEL)
+    utils.ENCODERS[utils.GENDER] = joblib.load(utils.ENCODERS[utils.GENDER])
+    utils.ENCODERS[utils.EDUCATION] = joblib.load(utils.ENCODERS[utils.EDUCATION])
+    utils.ENCODERS[utils.GOVERNORATE] = joblib.load(utils.ENCODERS[utils.GOVERNORATE])
+    utils.ENCODERS[utils.DISABILITY] = joblib.load(utils.ENCODERS[utils.DISABILITY])
 else:
     model = ai_model.DataModel(
         os.path.join(
-            settings.BASE_DIR,
-            'PreProcessingAndModelCode',
-            'data',
-            'fixed_tree_results',
-            'prefinals.csv'
+            settings.DATA_PATH,
+            'final_outputs.csv'
         ),
-        CONTRIBUTORS
+        utils.API_CONTRIBUTORS + utils.API_TARGET
     ).build_and_train_model()
-    ENCODERS[GENDER] = joblib.load(ENCODERS[GENDER])
-    ENCODERS[EDUCATION] = joblib.load(ENCODERS[EDUCATION])
-    ENCODERS[GOVERNORATE] = joblib.load(ENCODERS[GOVERNORATE])
-print(model)
-print(ENCODERS)
+    utils.ENCODERS[utils.GENDER] = joblib.load(utils.ENCODERS[utils.GENDER])
+    utils.ENCODERS[utils.EDUCATION] = joblib.load(utils.ENCODERS[utils.EDUCATION])
+    utils.ENCODERS[utils.GOVERNORATE] = joblib.load(utils.ENCODERS[utils.GOVERNORATE])
+    utils.ENCODERS[utils.DISABILITY] = joblib.load(utils.ENCODERS[utils.DISABILITY])
 
-
-# URL example
-# http://127.0.0.1:8000/cluster/?experience=0&age=20&education_level=2&employment_status=2&disability_no_disability=1&governorate_amman=1
 
 # @api_view(['GET'])
 # def info_list(request):
@@ -54,7 +53,7 @@ print(ENCODERS)
 @api_view(['GET', 'POST'])
 def get_cluster(request):
     parameters = []
-    for feature in API_FEATURES:  # request to submit each parameter using its name
+    for feature in utils.API_CONTRIBUTORS:  # request to submit each parameter using its name
         parameters.append(request.query_params.get(feature))
 
     if request.method == 'GET':
@@ -67,49 +66,59 @@ def get_cluster(request):
         print(data)
 
     model_input = {}
-    for feature in API_FEATURES:  # accept parameter and preprocess them
-        print('Feature -------------------------- ', feature)
-        if feature in LABEL_ENCODED_FEATURES:
-            print('Feature Value-------------------------- ', data.get(feature))
-            na_fill_value = TEMPLATE_DATA_CATEGORIES[feature][NA_FILL_VALUE]
-            print('NA FILL -------------------------- ', na_fill_value)
-            value = eval(TEMPLATE_DATA_CATEGORIES[feature][CODE].format('data.get(feature, na_fill_value)'))
-            print('Preprocessed VALUE  -------------------------- ', value)
-            item = ENCODERS[feature].transform([value])[0]
-            print('Encoded Value -------------------------- ', item)
-            model_input[feature] = int(item)
+    for feature in utils.API_CONTRIBUTORS:  # accept parameter and preprocess them
+        # print('Feature -------------------------- ', feature)
+        if feature in utils.LABEL_ENCODED_FEATURES:
+            # print('Feature Value-------------------------- ', data.get(feature))
+            # na_fill_value = TEMPLATE_DATA_CATEGORIES[feature][NA_FILL_VALUE]
+            # print('NA FILL -------------------------- ', na_fill_value)
+            value = eval(utils.TEMPLATE_DATA_CATEGORIES[feature][utils.CODE].format('data.get(feature, None)'))
+            # print('Preprocessed VALUE  -------------------------- ', value)
+            model_input[feature] = int(utils.ENCODERS[feature].transform([value])[0]) if value is not None else value
 
-        elif feature in ONE_HOT_ENCODED_FEATURES:
+        elif feature in utils.ONE_HOT_ENCODED_FEATURES:
             # categories = ENCODERS[feature].get_feature_names_out()
             # print(categories)
             # for i in range(len(categories)):
             #     model_input[categories[i]] = 0 if data.get(feature) not in categories[i] else 1
-            print('Feature Value-------------------------- ', data.get(feature))
-            na_fill_value = TEMPLATE_DATA_CATEGORIES[feature][NA_FILL_VALUE]
-            print('NA FILL -------------------------- ', na_fill_value)
-            value = eval(TEMPLATE_DATA_CATEGORIES[feature][CODE].format('data.get(feature, na_fill_value)'))
-            print('Preprocessed VALUE  -------------------------- ', value)
-            item = ENCODERS[feature].transform([[value]]).indices
-            print('Encoded Value -------------------------- ', item)
-            print(list(item))
-            lst = {v.replace(f'{feature}_', '') : 1 if item == i else 0 for i, v in enumerate(ENCODERS[feature].get_feature_names_out())}
-            print('Transferred Items Value -------------------------- ', lst)
+            # print('Feature Value-------------------------- ', data.get(feature))
+            # na_fill_value = TEMPLATE_DATA_CATEGORIES[feature][NA_FILL_VALUE]
+            # print('NA FILL -------------------------- ', na_fill_value)
+            value = eval(utils.TEMPLATE_DATA_CATEGORIES[feature][utils.CODE].format('data.get(feature, None)'))
+            # print('Preprocessed VALUE  -------------------------- ', value)
+            if value is not None:
+                item = utils.ENCODERS[feature].transform([[value]]).indices
+                # print('Encoded Value -------------------------- ', item)
+                # print(list(item))
+                lst = {
+                    v.replace(f'{feature}_', ''): 1 if item == i else 0 for i, v in
+                    enumerate(utils.ENCODERS[feature].get_feature_names_out())
+                }
+            else:
+                lst = [None]
+            # print('Transferred Items Value -------------------------- ', lst)
             model_input.update(lst)
         else:
-            print('Feature Value-------------------------- ', data.get(feature))
-            na_fill_value = TEMPLATE_DATA_CATEGORIES[feature][NA_FILL_VALUE]
-            print('NA FILL -------------------------- ', na_fill_value)
-            item = eval(TEMPLATE_DATA_CATEGORIES[feature][CODE].format('data.get(feature, na_fill_value)'))
-            print('Preprocessed VALUE  -------------------------- ', item)
+            # print(f'Feature {feature} Value-------------------------- ', data.get(feature))
+            # na_fill_value = TEMPLATE_DATA_CATEGORIES[feature][NA_FILL_VALUE]
+            # print('NA FILL -------------------------- ', na_fill_value)
+            item = eval(utils.TEMPLATE_DATA_CATEGORIES[feature][utils.CODE].format('data.get(feature, None)'))
+            # print('Preprocessed VALUE  -------------------------- ', item)
             model_input[feature] = int(item)
 
             # na_fill_value = TEMPLATE_DATA_CATEGORIES[feature][NA_FILL_VALUE]
             # item = int(data.get(feature, na_fill_value))
             # model_input[feature] = item
 
-        print('-' * 50, 'New Variable', '-' * 50)
+        # print('-' * 50, 'New Variable', '-' * 50)
 
-    print('Model_Inputs', '-' * 50, model_input)
-    res = model.predict(pd.DataFrame(model_input, index=[0]))
-    print('RES :', res[0])
-    return JsonResponse({'cluster': str(res[0])}, safe=False, status=status.HTTP_200_OK)
+    print('Model_Inputs', '-' * 50, )
+    dd = list(model_input.values())
+    if any(elem is None for elem in dd) or any(elem is np.nan for elem in dd):
+        print('Went for missing -------------------------------')
+        res = utils.predict_node_for_missing_value(model, dd)[-1]
+    else:
+        print('Went for complete -------------------------------')
+        res = model.predict([dd])[0]
+    print('RES :', res)
+    return JsonResponse({'cluster': str(res)}, safe=False, status=status.HTTP_200_OK)

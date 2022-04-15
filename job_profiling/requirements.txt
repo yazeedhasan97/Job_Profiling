@@ -4,3 +4,12 @@ mongoengine
 django-mongoengine
 django-rest-framework-mongoengine
 djangorestframework
+pandas
+numpy
+scikit-learn
+graphviz
+scikit-survival
+scipy
+lifelines
+matplotlib
+joblib

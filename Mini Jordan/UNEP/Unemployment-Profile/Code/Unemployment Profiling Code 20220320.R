@@ -78,7 +78,7 @@ grapherFunction = function(gend, method, lastObs, clusterNum, wb) {
     mutate(RegisterAfterFired = lag(RegisterAfterFired)) %>%
     mutate_at(vars(RegisterAfterFired), ~replace(., is.na(.), 0)) 
   
-  if(method == 'Method 3'){
+  if(method == 'Method 3'){ # NEEDS MORE ATTINTION
     data = data %>% mutate(LastJobC = ifelse(last_ind == 1 & reason_suspension_tr %in% c('Resignation', 'Laid off'), 0, LastJobC))
     
     data$LastJobC[data$`_merge_with_mol`==2]         = 0
@@ -91,7 +91,7 @@ grapherFunction = function(gend, method, lastObs, clusterNum, wb) {
     dataTemp$unempl_spell       = maxDate-dataTemp$end_date
     dataTemp$RegisterAfterFired = 1
     
-    data                        = rbind(data,dataTemp)
+    data                        = rbind(data,dataTemp) # NEEDS MORE ATTINTION # not sure this is a correct step as it wil creaet duplicate data
   }
   
   # Step 2 ----------------------------------------------------------------
@@ -104,9 +104,9 @@ grapherFunction = function(gend, method, lastObs, clusterNum, wb) {
   dataS = dataS %>% filter(!is.na(unempl_spell) & unempl_spell > 0 & unempl_spell < 1800)
   
   # Take only one if needed.
-  if(!lastObs == 'All'){
+  if(!lastObs == 'All'){ # NEEDS MORE ATTINTION # not moved to python since attached to the graph building
     dataS = dataS %>%
-      group_by(dataS$NationalID_Number) %>%
+      group_by(dataS$NationalID_Number) %>% # this is for people with multible jobs # it explains the duplicate id in the data
       filter(row_number() == n())
   }
   
@@ -192,7 +192,7 @@ grapherFunction = function(gend, method, lastObs, clusterNum, wb) {
   dataS$UnemploymentSpell = dataS$unempl_spell/30 # Measured in months.
   
   # Select right column:
-  if(lastObs == 'All') {
+  if(lastObs == 'All') { # NEEDS MORE ATTINTION # what is lastObs and what is its main Job
     dataS           = dataS[, c(63,65:77)]
     colnames(dataS) = c('LastJobC' ,'FirstJob', 'Experience', 'Age', 'Governorate','Disability', 'Gender', 'EducationLevel','UnemploymentYear','SameJob', 'WageGroup','Poverty', 'Industry','UnemploymentSpell')
   } else {
@@ -205,7 +205,7 @@ grapherFunction = function(gend, method, lastObs, clusterNum, wb) {
   gen = unique(dataS$Gender)[if(gend=='Male'){1}else{2}]
   finalDataF=dataS[dataS$Gender%in%gen&dataS$SameJob%in%c('No'),]
   finalDataF$one=1
-  finalDataF=finalDataF[complete.cases(finalDataF),]
+  finalDataF=finalDataF[complete.cases(finalDataF),]  # NEEDS MORE ATTINTION # the number of records at this state reduced to 1.5K from 64K due to empty povirty score
   controlBasic = rpart.control(minbucket = if(lastObs == 'One'){500}else{500}, cp = 0.0002, maxsurrogate = 0, usesurrogate = 0, xval = 10)
   controlBasic_ot = rpart.control(minbucket = if(lastObs == 'One'){50}else{50}, cp = 0.0002, maxsurrogate = 0, usesurrogate = 0, xval = 10)
   
@@ -223,7 +223,9 @@ grapherFunction = function(gend, method, lastObs, clusterNum, wb) {
     }
   } 
   
-  # Training material:
+  
+  # NEEDS MORE ATTINTION # we don't need the below part as we are using place holders (moreover, it won't bedetriminstic) # YOU NEED TO FOLLOW THE MOST FREQUANT DESTRIBUTION
+  # Training material: # NEEDS MORE ATTINTION # No need for this as we are now using place holders (this is called imputaion and may not be as much acurate as need)
   tr_FirstJob = rpart(formula = FirstJob ~ Experience+Age+Governorate+Disability+Gender+EducationLevel+Industry,
                       data = finalDataF, control = controlBasic_ot)
   
@@ -356,7 +358,7 @@ grapherFunction = function(gend, method, lastObs, clusterNum, wb) {
   # 
   ################Here
   
-  hc1 = hclust(d, method = 'ward.D')
+  hc1 = hclust(d, method = 'ward.D') ####### Just a referance
   k   = min(length(keyNodes), clusterNum) # Number of clusters.
   
   # Plot: 
