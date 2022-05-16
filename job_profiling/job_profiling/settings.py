@@ -27,7 +27,8 @@ SECRET_KEY = '(3$rv2kr@#t25hb@t0a@#tx8_b^%e6s#3=rv8u^1k#yc=ep05@'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+
+ALLOWED_HOSTS = ['10.0.52.250', 'localhost', '10.0.154.189', '127.0.0.1']
 
 # Application definition
 
@@ -38,12 +39,11 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-
     'rest_framework',
-    'rest_framework_mongoengine',
+    # 'rest_framework_mongoengine',
 
-    'django_mongoengine.mongo_auth',
-    'django_mongoengine.mongo_admin',
+    # 'django_mongoengine.mongo_auth',
+    # 'django_mongoengine.mongo_admin',
     'api',
 ]
 
@@ -59,14 +59,14 @@ REST_FRAMEWORK = {
 }
 
 ######### MONGODB ##################
-MONGODB_DATABASES = {
-    "default": {
-        "name": 'api',
-    },
-}
-INSTALLED_APPS += ["django_mongoengine"]
+# MONGODB_DATABASES = {
+#     "default": {
+#         "name": 'api',
+#     },
+# }
+# INSTALLED_APPS += ["django_mongoengine"]
 
-SESSION_ENGINE = 'django_mongoengine.sessions'
+# SESSION_ENGINE = 'django_mongoengine.sessions'
 
 ############################################
 
