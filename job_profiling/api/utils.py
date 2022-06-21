@@ -15,9 +15,8 @@ API_CONTRIBUTORS = [GOVERNORATE, AGE, EXPERIENCE, EDUCATION, GENDER, DISABILITY]
 TARGET = 'clusters'
 API_TARGET = [TARGET]
 
-
-ONE_HOT_ENCODED_FEATURES = []
-LABEL_ENCODED_FEATURES = [GENDER, EDUCATION, GOVERNORATE, DISABILITY]
+ONE_HOT_ENCODED_FEATURES = [GOVERNORATE, EDUCATION,]
+LABEL_ENCODED_FEATURES = [GENDER, DISABILITY]
 CATEGORICAL_FEATURES = ONE_HOT_ENCODED_FEATURES + LABEL_ENCODED_FEATURES
 
 ENCODERS = {
@@ -39,29 +38,6 @@ CODE = 'CODE'
 # DISABILITY = 'disability'
 
 TEMPLATE_DATA_CATEGORIES = {
-    # FIRST_JOB: {
-    #     CATEGORIES: [0, 1],
-    #     CODE: "first_job_code({0})",
-    #     NA_FILL_VALUE: 0
-    # },
-
-    # EMPLOYMENT: {
-    #     CATEGORIES: ['unemployed', 'formal_worker', 'daily_worker', 'informal_worker', 'housewife', 'self_employed'],
-    #     CODE: "employment_code({0})",
-    #     NA_FILL_VALUE: 'unemployed'
-    # },
-    # INDUSTRY: {
-    #     CATEGORIES: [
-    #         'industry', 'construction', "tourism", "education",
-    #         'wholesale_and_retail_trade', 'agriculture_hunting_and_fishery',
-    #         'mining_and_quarrying', 'transportation_communication_and_storage', 'electricity_gas_and_water',
-    #         'community_service_activities', 'financial_activities', 'health_and_social_activities',
-    #         'real_estate_activities', 'public_administration_defense_and_social_security',
-    #         'international_organizations', 'private_families_who_hire_individuals_for_household_chores',
-    #     ],
-    #     CODE: "industry_code({0})",
-    #     NA_FILL_VALUE: 'none'
-    # },
     DISABILITY: {
         CATEGORIES: ['with_disability', 'no_disability'],
         CODE: "utils.disability_code({0})",
@@ -171,8 +147,7 @@ def governorate_code(value):
     if value is None:
         return None
 
-    value = str(value).lower().replace(f'governorate_', '')
-    # print("Preprocessing ---------------------------------------- ", value)
+    value = str(value).lower()  # .replace(f'governorate_', '')
     governorate_subs = {
         'al_kirk': ['al_kark', 'al_kirk', 'kark', 'kirk', ],
         'balqa': ['balqa', 'al_balqa', 'balqaa', 'al_balqaa', ],
@@ -244,9 +219,11 @@ def predict_node_for_missing_value(model, data):
             is_leaves[node_id] = True
 
     print(
-        "The binary tree structure has {n} nodes, {l} leaves and has the following tree structure:\n".format(n=n_nodes,
-                                                                                                             l=np.sum(
-                                                                                                                 is_leaves)))
+        "The binary tree structure has {n} nodes, {l} leaves and has the following tree structure:\n".format(
+            n=n_nodes,
+            l=np.sum(is_leaves)
+        )
+    )
 
     current_node = 0
     for i in range(n_nodes):
@@ -282,31 +259,3 @@ def predict_node_for_missing_value(model, data):
             return current_node, np.argmax(model.tree_.value[current_node])
 
     return current_node, np.argmax(model.tree_.value[current_node])
-
-
-# def industry_code(value):
-#     if value in TEMPLATE_DATA_CATEGORIES[INDUSTRY][CATEGORIES]:
-#         return str(value).lower()
-#
-#     return TEMPLATE_DATA_CATEGORIES[INDUSTRY][NA_FILL_VALUE]
-
-
-# def employment_code(value):
-#     value = str(value).lower()
-#     employment_subs = {
-#         'unemployed': ['home', 'unemployed', 'un_employed'],
-#         'formal_worker': ['job', 'worker', 'formal_worker', 'full_time'],
-#         'daily_worker': ['daily_worker'],
-#         'informal_worker': ['part_time', 'parttime', 'informal', 'informal_worker'],
-#         'housewife': ['housewife', 'house_wife'],
-#         'self_employed': ['freelancer', 'freelance', 'self_employed'],
-#     }
-#     for key in employment_subs:
-#         if value in employment_subs[key]:
-#             return key
-#
-#     return TEMPLATE_DATA_CATEGORIES[EMPLOYMENT][NA_FILL_VALUE]
-
-
-# def first_job_code(value):
-#     return 1 if value == 1 else 0
